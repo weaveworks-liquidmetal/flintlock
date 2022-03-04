@@ -24,7 +24,7 @@
             <pubDate>Tue, 02 Nov 2021 00:00:00 GMT</pubDate>
             <description><![CDATA[Welcome everyone !]]></description>
             <content:encoded><![CDATA[<p>Welcome everyone 👋 !</p><p>I'm not sure if we want this feature or not, we can remove it. Maybe we can put
-Release notes here.</p><p><img alt="Diagram 1" src="/assets/images/diagram-1-630f4cc44705ba4b55f0b3d056f74e22.png" width="936" height="418"></p><p>And we can include nice photos, diagrams, and other fancy images.</p>]]></content:encoded>
+Release notes here.</p><p><img loading="lazy" alt="Diagram 1" src="/assets/images/diagram-1-630f4cc44705ba4b55f0b3d056f74e22.png" width="936" height="418"></p><p>And we can include nice photos, diagrams, and other fancy images.</p>]]></content:encoded>
             <category>welcome</category>
         </item>
     </channel>
