@@ -9,24 +9,26 @@ import (
 )
 
 const (
-	grpcEndpointFlag      = "grpc-endpoint"
-	httpEndpointFlag      = "http-endpoint"
-	parentIfaceFlag       = "parent-iface"
-	bridgeNameFlag        = "bridge-name"
-	disableReconcileFlag  = "disable-reconcile"
-	disableAPIFlag        = "disable-api"
-	firecrackerBinFlag    = "firecracker-bin"
-	firecrackerDetachFlag = "firecracker-detach"
-	containerdSocketFlag  = "containerd-socket"
-	kernelSnapshotterFlag = "containerd-kernel-ss"
-	containerdNamespace   = "containerd-ns"
-	maximumRetryFlag      = "maximum-retry"
-	basicAuthTokenFlag    = "basic-auth-token"
-	insecureFlag          = "insecure"
-	tlsCertFlag           = "tls-cert"
-	tlsKeyFlag            = "tls-key"
-	tlsClientValidateFlag = "tls-client-validate"
-	tlsClientCAFlag       = "tls-client-ca"
+	grpcEndpointFlag          = "grpc-endpoint"
+	httpEndpointFlag          = "http-endpoint"
+	parentIfaceFlag           = "parent-iface"
+	bridgeNameFlag            = "bridge-name"
+	disableReconcileFlag      = "disable-reconcile"
+	disableAPIFlag            = "disable-api"
+	firecrackerBinFlag        = "firecracker-bin"
+	firecrackerDetachFlag     = "firecracker-detach"
+	containerdSocketFlag      = "containerd-socket"
+	kernelSnapshotterFlag     = "containerd-kernel-ss"
+	containerdNamespace       = "containerd-ns"
+	maximumRetryFlag          = "maximum-retry"
+	basicAuthTokenFlag        = "basic-auth-token"
+	insecureFlag              = "insecure"
+	tlsCertFlag               = "tls-cert"
+	tlsKeyFlag                = "tls-key"
+	tlsClientValidateFlag     = "tls-client-validate"
+	tlsClientCAFlag           = "tls-client-ca"
+	cloudHypervisorBinFlag    = "cloudhypervisor-bin"
+	cloudHypervisorDetachFlag = "cloudhypervisor-detach"
 )
 
 // AddGRPCServerFlagsToCommand will add gRPC server flags to the supplied command.
@@ -159,6 +161,20 @@ func AddFirecrackerFlagsToCommand(cmd *cobra.Command, cfg *config.Config) {
 		firecrackerDetachFlag,
 		defaults.FirecrackerDetach,
 		"If true the child firecracker processes will be detached from the parent flintlock process.")
+}
+
+// AddCloudHypervisorFlagsToCommand will add the Cloud Hypervisor provider specific flags to the supplied cobra command.
+func AddCloudHypervisorFlagsToCommand(cmd *cobra.Command, cfg *config.Config) error {
+	cmd.Flags().StringVar(&cfg.CloudHypervisorBin,
+		cloudHypervisorBinFlag,
+		defaults.CloudHypervisorBin,
+		"The path to the cloud hypervisor binary to use.")
+	cmd.Flags().BoolVar(&cfg.CloudHypervisorDetatch,
+		cloudHypervisorDetachFlag,
+		true,
+		"If true the child cloud hypervisor processes will be detached from the parent flintlock process.")
+
+	return nil
 }
 
 // AddContainerDFlagsToCommand will add the containerd specific flags to the supplied cobra command.

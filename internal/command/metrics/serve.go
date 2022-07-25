@@ -10,6 +10,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/weaveworks-liquidmetal/flintlock/core/models"
 	"github.com/weaveworks-liquidmetal/flintlock/core/ports"
+	"github.com/weaveworks-liquidmetal/flintlock/infrastructure/microvm"
 	"github.com/weaveworks-liquidmetal/flintlock/internal/command/flags"
 	"github.com/weaveworks-liquidmetal/flintlock/internal/config"
 	"github.com/weaveworks-liquidmetal/flintlock/internal/inject"
@@ -31,12 +32,15 @@ func serveCommand() *cli.Command {
 			flags.WithGlobalConfigFlags(),
 		),
 		Action: func(c *cli.Context) error {
-			return serve(cfg)
+			if c.Args().Len() < 1 {
+				return fmt.Errorf("you must supply the microvm provider as an argument. Support providers: %v", microvm.GetProviderNames())
+			}
+			return serve(c.Args().First(), cfg)
 		},
 	}
 }
 
-func serve(cfg *config.Config) error {
+func serve(providerName string, cfg *config.Config) error {
 	aports, err := inject.InitializePorts(cfg)
 	if err != nil {
 		return fmt.Errorf("initialising ports for application: %w", err)
@@ -63,7 +67,12 @@ func getAllMachineMetrics(ctx context.Context, aports *ports.Collection, query m
 	}
 
 	for _, machine := range machines {
-		metrics, err := aports.Provider.Metrics(ctx, machine.ID)
+		provider, ok := aports.MicrovmProviders[machine.Spec.Provider]
+		if !ok {
+			return nil, fmt.Errorf("microvm provider %s isn't available", machine.Spec.Provider)
+		}
+
+		metrics, err := provider.Metrics(ctx, machine.ID)
 		if err != nil {
 			return mms, err
 		}
@@ -88,7 +97,15 @@ func serveMachineByUID(aports *ports.Collection) serveFunc {
 			return
 		}
 
-		metrics, err := aports.Provider.Metrics(context.Background(), vm.ID)
+		provider, ok := aports.MicrovmProviders[vm.Spec.Provider]
+		if !ok {
+			logrus.Error(fmt.Errorf("microvm provider %s isn't available", vm.Spec.Provider))
+			response.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		metrics, err := provider.Metrics(context.Background(), vm.ID)
 		if err != nil {
 			logrus.Error(err.Error())
 			response.WriteHeader(http.StatusInternalServerError)

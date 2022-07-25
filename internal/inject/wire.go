@@ -4,7 +4,6 @@
 package inject
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/wire"
@@ -14,8 +13,8 @@ import (
 	"github.com/weaveworks-liquidmetal/flintlock/core/ports"
 	"github.com/weaveworks-liquidmetal/flintlock/infrastructure/containerd"
 	"github.com/weaveworks-liquidmetal/flintlock/infrastructure/controllers"
-	"github.com/weaveworks-liquidmetal/flintlock/infrastructure/firecracker"
 	microvmgrpc "github.com/weaveworks-liquidmetal/flintlock/infrastructure/grpc"
+	"github.com/weaveworks-liquidmetal/flintlock/infrastructure/microvm"
 	"github.com/weaveworks-liquidmetal/flintlock/infrastructure/network"
 	"github.com/weaveworks-liquidmetal/flintlock/infrastructure/ulid"
 	"github.com/weaveworks-liquidmetal/flintlock/internal/config"
@@ -27,11 +26,10 @@ func InitializePorts(cfg *config.Config) (*ports.Collection, error) {
 		containerd.NewImageService,
 		containerd.NewMicroVMRepo,
 		ulid.New,
-		firecracker.New,
 		network.New,
+		microvm.NewFromConfig,
 		appPorts,
 		containerdConfig,
-		firecrackerConfig,
 		networkConfig,
 		afero.NewOsFs)
 
@@ -45,7 +43,7 @@ func InitializeApp(cfg *config.Config, ports *ports.Collection) application.App 
 }
 
 func InializeController(app application.App, ports *ports.Collection) *controllers.MicroVMController {
-	wire.Build(controllers.New, eventSvcFromScope, reconcileUCFromApp)
+	wire.Build(controllers.New, eventSvcFromScope, reconcileUCFromApp, queryUCFromApp)
 
 	return nil
 }
@@ -65,14 +63,6 @@ func containerdConfig(cfg *config.Config) *containerd.Config {
 	}
 }
 
-func firecrackerConfig(cfg *config.Config) *firecracker.Config {
-	return &firecracker.Config{
-		FirecrackerBin: cfg.FirecrackerBin,
-		RunDetached:    cfg.FirecrackerDetatch,
-		StateRoot:      fmt.Sprintf("%s/vm", cfg.StateRootDir),
-	}
-}
-
 func networkConfig(cfg *config.Config) *network.Config {
 	return &network.Config{
 		ParentDeviceName: cfg.ParentIface,
@@ -82,15 +72,16 @@ func networkConfig(cfg *config.Config) *network.Config {
 
 func appConfig(cfg *config.Config) *application.Config {
 	return &application.Config{
-		RootStateDir: cfg.StateRootDir,
-		MaximumRetry: cfg.MaximumRetry,
+		RootStateDir:    cfg.StateRootDir,
+		MaximumRetry:    cfg.MaximumRetry,
+		DefaultProvider: cfg.DefaultVMProvider,
 	}
 }
 
-func appPorts(repo ports.MicroVMRepository, prov ports.MicroVMService, es ports.EventService, is ports.IDService, ns ports.NetworkService, ims ports.ImageService, fs afero.Fs) *ports.Collection {
+func appPorts(repo ports.MicroVMRepository, providers map[string]ports.MicroVMService, es ports.EventService, is ports.IDService, ns ports.NetworkService, ims ports.ImageService, fs afero.Fs) *ports.Collection {
 	return &ports.Collection{
 		Repo:              repo,
-		Provider:          prov,
+		MicrovmProviders:  providers,
 		EventService:      es,
 		IdentifierService: is,
 		NetworkService:    ns,

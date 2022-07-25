@@ -37,6 +37,10 @@ func convertMicroVMToModel(spec *types.MicroVMSpec) (*models.MicroVM, error) {
 		},
 	}
 
+	if spec.Provider != nil && *spec.Provider != "" {
+		convertedModel.Spec.Provider = *spec.Provider
+	}
+
 	if convertedModel.Spec.VCPU == 0 {
 		convertedModel.Spec.VCPU = defaults.VCPU
 	}
@@ -71,10 +75,6 @@ func convertMicroVMToModel(spec *types.MicroVMSpec) (*models.MicroVM, error) {
 		convertedNetInt := convertNetworkInterfaceToModel(netInt)
 		convertedModel.Spec.NetworkInterfaces = append(convertedModel.Spec.NetworkInterfaces, *convertedNetInt)
 	}
-
-	ifaces := []models.NetworkInterface{*newMetadataInterface()}
-	ifaces = append(ifaces, convertedModel.Spec.NetworkInterfaces...)
-	convertedModel.Spec.NetworkInterfaces = ifaces
 
 	convertedModel.Spec.Metadata = map[string]string{}
 	for metadataKey, metadataValue := range spec.Metadata {
